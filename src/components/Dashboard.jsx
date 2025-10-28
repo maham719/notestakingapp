@@ -63,15 +63,26 @@ const Dashboard = () => {
   };
 
   // Edit note
-  const editNote = (idx) => {
-    let copyNote = [...todo];
-          copyNote.splice(i, 1, {...note, disabled: false})
-          setTodo(copyNote)
+  const editNote = (idx,val) => {
+    let copyNote = [...note];
+          copyNote.splice(idx, 1, {...val, disabled: false})
+          setNote(copyNote)
 
     if (currentUser) {
       localStorage.setItem(`notes_${currentUser.uid}`, JSON.stringify(copyNote));
     }
   };
+  // update note 
+  const updateNote = (idx, val) => {
+  const copyNote = [...note];
+  copyNote[idx] = { ...val, disabled: true }; // make it read-only again
+
+  setNote(copyNote);
+
+  if (currentUser) {
+    localStorage.setItem(`notes_${currentUser.uid}`, JSON.stringify(copyNote));
+  }
+};
 
   return (
     <div>
@@ -164,7 +175,8 @@ const Dashboard = () => {
                     key={idx}
                     value={val}
                     delet={() => deleteNote(idx)}
-                    edit={() => editNote(idx)}
+                    edit={() => editNote(idx,val)}
+                    update={() => updateNote(idx,val)}
                   />
                 ))}
               </div>
