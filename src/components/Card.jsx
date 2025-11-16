@@ -60,7 +60,7 @@ const Card = ({value,delet,edit,update}) => {
         <div className="mt-4 w-full  overflow-visible">
           <input type="text" disabled={value.disabled} className='text-2xl font-bold capitalize focus:outline-none focus:border focus:border-gray-200 w-full' placeholder='Title' defaultValue={value.title} onChange={(e) => value.title = e.target.value} >
           </input>
-         <input type="text"  disabled={value.disabled} className="mt-2 text-md text-slate-800 focus:outline-none focus:border focus:border-gray-200 w-full" placeholder='Details' defaultValue={value.detail}  onChange={(e) => value.detail = e.target.value}/>
+         <textarea type="text"  disabled={value.disabled} className="mt-2 text-md text-slate-800 focus:outline-none focus:border focus:border-gray-200 w-full" placeholder='Details' defaultValue={value.detail}  onChange={(e) => value.detail = e.target.value}/>
         </div>
       </div>
     </div>
