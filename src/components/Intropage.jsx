@@ -1,9 +1,13 @@
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import Navbar from './Navbar';
-const Intropage = ({isClicked}) => {
+import { Link } from 'react-router-dom';
+
+
+
+const Intropage = () => {
   return (
     <div>
-        <Navbar clicked={isClicked}/>
+        <Navbar/>
      <div className="max-w-7xl mx-auto pt-4">
   <div className="grid lg:grid-cols-2 items-center gap-8">
     <div className="max-lg:order-1 max-lg:text-center z-50 relative max-lg:max-w-screen-sm max-lg:mx-auto">
@@ -15,14 +19,15 @@ const Intropage = ({isClicked}) => {
         Simple. Fast. Distraction-free.
 A note-taking app designed to help you think clearly and stay organized. No clutter, no chaos — just a smooth, minimal experience built for focus.
       </p>
+      <Link to="/login">
       <button
         type="button"
         className="mt-8 bg-[#0776F1] hover:bg-transparent hover:text-[#0776F1] border-2 border-[#0776F1] transition-all text-white font-semibold text-base tracking-wide rounded-full px-6 py-3 cursor-pointer"
-        onClick={isClicked}
+        
       >
         Get Started
       </button>
-    
+    </Link>
     </div>
     
  <DotLottieReact src={"/Notesanimation.lottie"} autoplay loop className="w-fit h-full" />

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import { Link } from 'react-router-dom';
 
-const Navbar = ({ clicked }) => {
+const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleToggle = () => {
@@ -58,10 +59,11 @@ const Navbar = ({ clicked }) => {
 
         {/* Buttons */}
         <div className="flex items-center max-lg:ml-auto space-x-4">
+          <Link to="/login">
           <button
             type="button"
             className="bg-[#0776F1] hover:bg-[#096ee1] px-4 py-2 rounded-md text-white text-[15px] font-medium flex items-center justify-center gap-2 cursor-pointer"
-            onClick={clicked}
+           
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -73,7 +75,7 @@ const Navbar = ({ clicked }) => {
             </svg>
             Login
           </button>
-
+</Link>
         </div>
         </div>
         </div>

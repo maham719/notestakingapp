@@ -1,11 +1,13 @@
 import signup from '../assets/images/signup.png'
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebase";
+import { auth } from "../config/firebase.js";
 import { Notyf } from 'notyf';
 import 'notyf/notyf.min.css';
 import { useState } from 'react';
+import Button from './Button.jsx';
+import { Link } from 'react-router-dom';
 
-const Login = ({ children }) => {
+const Login = () => {
     
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,7 +44,12 @@ const notyf = new Notyf({
                 <h1 className="text-slate-900 text-2xl font-semibold">
                   Login
                 </h1>
-               {children}
+                 <Link to="/signup"><Button
+            text="Register"
+            slogan="Don't have an account?"
+            onclick={() => setType("signup")}
+          />
+          </Link>
               </div>
 
               <div className="space-y-6">
@@ -153,6 +160,7 @@ const notyf = new Notyf({
 
             
             </form>
+           
           </div>
 
           {/* RIGHT SIDE - Image */}

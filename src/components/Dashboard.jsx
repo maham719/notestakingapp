@@ -1,43 +1,61 @@
 import { useState, useEffect } from "react";
 import Card from "./Card";
-import Profile from "./Profile";
 import Sidebar from "./Sidebar";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../firebase";
+import { auth,db } from "../config/firebase.js";
+import { collection, addDoc ,onSnapshot,updateDoc,doc,deleteDoc} from "firebase/firestore"; 
 
-const Dashboard = () => {
+const Dashboard = ({ currentUser }) => {
   const [button, setButton] = useState(false);
   const [title, setTitle] = useState("");
   const [detail, setDetail] = useState("");
   const [note, setNote] = useState([]);
-  const [currentUser, setCurrentUser] = useState(null);
+  
 
-  // Load current user & notes from localStorage
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const userData = {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName,
-          photoURL: user.photoURL,
-        };
-        setCurrentUser(userData);
-        localStorage.setItem("currentUser", JSON.stringify(userData));
+  const handleLogout=()=>{
+  signOut(auth).then(() => {
+    // Sign-out successful.
+  }).catch((error) => {
+    // An error happened.
+  });
+  
+  }
+  
+const addData = async () => {
+  if (!currentUser) return;
 
-        // Load notes for this user from localStorage
-        const savedNotes = localStorage.getItem(`notes_${user.uid}`);
-        if (savedNotes) {
-          setNote(JSON.parse(savedNotes));
-        }
-      } else {
-        setCurrentUser(null);
-        localStorage.removeItem("currentUser");
+  try {
+    const docRef = await addDoc(
+      collection(db, "users", currentUser.uid, "notes"),
+      {
+        title: title,
+        detail: detail,
+        createdAt: new Date(),
       }
-    });
+    );
 
-    return () => unsubscribe();
-  }, []);
+    console.log("Note saved with ID:", docRef.id);
+  } catch (e) {
+    console.error("Error adding note:", e);
+  }
+};
+
+useEffect(() => {
+  if (!currentUser) return;
+
+  const unsub = onSnapshot(
+    collection(db, "users", currentUser.uid, "notes"),
+    (snapshot) => {
+      const userNotes = snapshot.docs.map((doc) => ({
+        id: doc.id,
+         disabled: true,
+        ...doc.data(),
+      }));
+      setNote(userNotes);
+    }
+  );
+
+  return () => unsub();
+}, [currentUser]);
 
   // Save note
   const submitHandler = () => {
@@ -52,65 +70,51 @@ const Dashboard = () => {
   };
 
   // Delete note
-  const deleteNote = (idx) => {
-    const copyNote = [...note];
-    copyNote.splice(idx, 1);
-    setNote(copyNote);
-
-    if (currentUser) {
-      localStorage.setItem(`notes_${currentUser.uid}`, JSON.stringify(copyNote));
-    }
-  };
-
-  // Edit note
-  const editNote = (idx,val) => {
-    let copyNote = [...note];
-          copyNote.splice(idx, 1, {...val, disabled: false})
-          setNote(copyNote)
-
-    if (currentUser) {
-      localStorage.setItem(`notes_${currentUser.uid}`, JSON.stringify(copyNote));
-    }
-  };
-  // update note 
-  const updateNote = (idx, val) => {
-  const copyNote = [...note];
-  copyNote[idx] = { ...val, disabled: true }; // make it read-only again
-
-  setNote(copyNote);
-
-  if (currentUser) {
-    localStorage.setItem(`notes_${currentUser.uid}`, JSON.stringify(copyNote));
+  const deleteNote = async (id) => {
+  try {
+    await deleteDoc(doc(db, "users", currentUser.uid, "notes", id));
+  } catch (err) {
+    console.error("Delete error:", err);
   }
 };
 
+  // Edit note
+ const editNote = (id) => {
+  const updated = note.map((n) =>
+    n.id === id ? { ...n, disabled: false } : n
+  );
+  setNote(updated);
+};
+  // update note 
+const updateNote = async (id, updatedValue) => {
+  try {
+    await updateDoc(doc(db, "users", currentUser.uid, "notes", id), {
+      title: updatedValue.title,
+      detail: updatedValue.details, 
+    });
+
+  
+    setNote((prev) =>
+      prev.map((n) =>
+        n.id === id ? { ...n, title: updatedValue.title, detail: updatedValue.details, disabled: true } : n
+      )
+    );
+
+  } catch (err) {
+    console.error("Update error:", err);
+  }
+};
   return (
     <div>
       <div className="relative bg-[#f7f6f9] h-full min-h-screen">
         <div className="flex items-start">
-          <Sidebar />
-          <button
-            id="open-sidebar"
-            className="lg:hidden ml-4 mt-4 fixed top-0 left-0 bg-white z-50"
-          >
-            <svg
-              className="w-7 h-7"
-              fill="#000"
-              viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fillRule="evenodd"
-                d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </button>
+          
+         
           <section className="main-content w-full px-6 flex flex-col gap-4">
 
             {/* Header starting */}
             <header className="z-50 bg-[#f7f6f9] sticky top-0 pt-4">
-              <div className="flex flex-wrap items-center px-6 py-2 bg-white shadow-md min-h-14 rounded-md w-full relative tracking-wide">
+              <div className="flex items-center justify-between px-6 py-2 bg-white shadow-md min-h-14 rounded-md w-full relative tracking-wide">
                 <div className="flex items-center flex-wrap gap-x-8 gap-y-4 z-50 w-full">
                   <div className="flex items-center gap-4 py-1 outline-none border-none">
                     <button className="flex hover:cursor-pointer gap-2" onClick={() => setButton(true)}> 
@@ -123,11 +127,28 @@ const Dashboard = () => {
                         <path d="M4 1V4H1V6H4V9H6V6H9V4H6V1H4ZM3 20.0066V11H5V19H13V14C13 13.45 13.45 13 14 13L19 12.999V5H11V3H20.0066C20.5552 3 21 3.45576 21 4.00247V15L15 20.996L4.00221 21C3.4487 21 3 20.5551 3 20.0066ZM18.171 14.999L15 15V18.169L18.171 14.999Z"></path>
                       </svg> Add Note
                     </button>
-
-                    <Profile />
+     
                   </div>
                 </div>
+                <a
+                      href="javascript:void(0)"
+                      className="text-[15px] text-slate-800 font-medium cursor-pointer flex items-center p-2 rounded-md hover:bg-blue-100 dropdown-item transition duration-300 ease-in-out"
+                      onClick={handleLogout}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-[18px] h-[18px] mr-3 fill-current"
+                        viewBox="0 0 6 6"
+                      >
+                        <path
+                          d="M3.172.53a.265.266 0 0 0-.262.268v2.127a.265.266 0 0 0 .53 0V.798A.265.266 0 0 0 3.172.53zm1.544.532a.265.266 0 0 0-.026 0 .265.266 0 0 0-.147.47c.459.391.749.973.749 1.626 0 1.18-.944 2.131-2.116 2.131A2.12 2.12 0 0 1 1.06 3.16c0-.65.286-1.228.74-1.62a.265.266 0 1 0-.344-.404A2.667 2.667 0 0 0 .53 3.158a2.66 2.66 0 0 0 2.647 2.663 2.657 2.657 0 0 0 2.645-2.663c0-.812-.363-1.542-.936-2.03a.265.266 0 0 0-.17-.066z"
+                          data-original="#000000"
+                        />
+                      </svg>
+                      Logout
+                    </a>
               </div>
+              
             </header>
 
             {/* Note form */}
@@ -150,14 +171,14 @@ const Dashboard = () => {
                 <div className="w-1/2 flex gap-4 self-end items-center justify-end">
                   <button
                     type="button"
-                    className="px-6 py-2.5 rounded-md text-white text-sm cursor-pointer tracking-wider font-medium border-0 outline-0 bg-gradient-to-tr from-blue-700 to-blue-400 hover:from-blue-600 hover:to-blue-300 w-1/6 self-end"
-                    onClick={submitHandler}
+                    className="px-6 py-2.5 rounded-md text-white text-sm cursor-pointer tracking-wider font-medium border-0 outline-0 bg-linear-to-tr from-blue-700 to-blue-400 hover:from-blue-600 hover:to-blue-300 w-1/6 self-end"
+                    onClick={addData}
                   >
                     Save
                   </button>
                   <button
                     type="button"
-                    className="px-6 py-2.5 rounded-md text-white text-sm cursor-pointer tracking-wider font-medium border-0 outline-0 bg-gradient-to-tr from-black to-[#888]"
+                    className="px-6 py-2.5 rounded-md text-white text-sm cursor-pointer tracking-wider font-medium border-0 outline-0 bg-linear-to-tr from-black to-[#888]"
                     onClick={() => setButton(false)}
                   >
                     Cancel
@@ -170,15 +191,16 @@ const Dashboard = () => {
             <div className="my-6 ">
               <div className="flex items-start  gap-4 flex-wrap">
                 {/* Map directly over saved notes from localStorage */}
-                {currentUser && JSON.parse(localStorage.getItem(`notes_${currentUser.uid}`) || "[]").map((val, idx) => (
-                  <Card
-                    key={idx}
-                    value={val}
-                    delet={() => deleteNote(idx)}
-                    edit={() => editNote(idx,val)}
-                    update={() => updateNote(idx,val)}
-                  />
-                ))}
+          {note.map((val) => (
+<Card
+  key={val.id}
+  value={val}
+  delet={deleteNote}
+  edit={editNote}
+  update={(id, updatedVal) => updateNote(id, { title: updatedVal.title, details: updatedVal.details })}
+/>
+))}
+
               </div>
             </div>
 
@@ -187,6 +209,6 @@ const Dashboard = () => {
       </div>
     </div>
   );
-};
+}
 
 export default Dashboard;

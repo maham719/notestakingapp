@@ -1,10 +1,12 @@
 import login from "../assets/images/login.jpg"; // replace with your login image if available
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebase";
+import { auth } from "../config/firebase.js";
 import { useState } from "react";
 import { Notyf } from 'notyf';
 import 'notyf/notyf.min.css';
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import Button from "./Button.jsx";
+import { Link } from "react-router-dom";
 
 const Signup = ({children}) => {
     const [email, setEmail] = useState("");
@@ -203,7 +205,13 @@ const googlesignin=()=>{
           >
             Creat an account
           </button>
-        {children}
+          <Link to="/login">
+        <Button
+            text="Login"
+            slogan="Already have an account?"
+            onclick={() => setType("login")}
+          />
+          </Link>
          {/* Social Login Buttons */}
                       <div className="my-6 flex items-center gap-4">
                   <hr className="w-full border-slate-300" />
